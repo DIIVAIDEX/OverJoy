@@ -38,6 +38,7 @@
 #include "stm32f0xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "OJ_Main.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -57,6 +58,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
+extern uint8_t colibState;
 
 extern USB_JoystickReport_Data_t joyStates;
 /* USER CODE END PV */
@@ -189,7 +191,16 @@ void EXTI4_15_IRQHandler(void)
 //  else{
 //	  joyStates.a7 = 1;
 //  }
-  GetMaxMinValues();
+  if(colibState == 0){
+	  colibState = 1;
+  }
+  else if(colibState == 1){
+	  colibState = 2;
+	  GetColibValues();
+  }
+  else if(colibState == 2){
+	  colibState = 0;
+  }
 //	if(HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == GPIO_PIN_RESET){
 //		joyStates.a7 = 1;
 //	}

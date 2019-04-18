@@ -23,8 +23,8 @@
 typedef struct _dataStructTLETypeDef
 {
 	uint8_t	ctrl1;
-	uint16_t valueX;
-	uint16_t valueY;
+	int16_t valueX;
+	int16_t valueY;
 	uint8_t	fcn_stat;
 	uint8_t	fsync_inv;
 	uint8_t	angt;

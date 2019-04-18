@@ -82,9 +82,10 @@ TIM_HandleTypeDef htim3;
 
 /* USER CODE BEGIN PV */
 USB_JoystickReport_Data_t joyStates;
-
-uint16_t tleValues[2];
-uint16_t tleTemp;
+extern sysDataTLETypeDef sysDataTLE;
+int16_t tleValues[2];
+int16_t tleTemp;
+uint8_t colibState;
 
 float resultAngle;
 
@@ -159,7 +160,9 @@ int main(void)
 	HAL_Delay(100);
 
 //	TLEConfig(TLE_CFG_INIT, NULL);
+	colibState = 0;
 	GetTempValues();
+
 
   /* USER CODE END 2 */
 
@@ -167,8 +170,14 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  if(sysDataTLE.tempDepend.x != 0 && sysDataTLE.tempDepend.y != 0){
-		  resultAngle = ResultAngle();
+	  if(colibState == 1){
+		  GetMaxMinValues();
+	  }
+//	  else if(colibState == 2){
+//		  OrtCorrByDFT();
+//	  }
+	  else if(sysDataTLE.tempDepend.x != 0 && sysDataTLE.tempDepend.y != 0){
+		  resultAngle = GetResultAngle();
 	  }
 
     /* USER CODE END WHILE */
@@ -346,8 +355,8 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : LD2_Pin */

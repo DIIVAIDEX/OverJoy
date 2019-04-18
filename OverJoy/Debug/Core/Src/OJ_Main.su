@@ -1,4 +1,5 @@
-OJ_Main.c:29:6:GetTempValues	8	static
-OJ_Main.c:37:6:GetColibValues	40	static
 OJ_Main.c:15:6:GetMaxMinValues	8	static
-OJ_Main.c:61:7:ResultAngle	48	static
+OJ_Main.c:34:6:GetTempValues	8	static
+OJ_Main.c:42:6:GetColibValues	40	static
+OJ_Main.c:72:7:GetResultAngle	32	static
+OJ_Main.c:111:6:OrtCorrByDFT	376	static

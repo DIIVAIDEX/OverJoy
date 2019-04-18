@@ -14,14 +14,18 @@
 #include "math.h"
 #include "OJ_TLE.h"
 
+#define PI_CONST 3.1415926535
+
 typedef struct _sysDataTLETypeDef
 {
-	uint16_t maxX;
-	uint16_t maxY;
-	uint16_t minX;
-	uint16_t minY;
-	uint16_t tempX;
-	uint16_t tempY;
+	int16_t maxX;
+	int16_t maxY;
+	int16_t minX;
+	int16_t minY;
+	int16_t tempX;
+	int16_t curX;
+	int16_t curY;
+	float 	ortDef;
 	struct{
 		float x;
 		float y;
@@ -49,11 +53,14 @@ typedef struct _sysDataTLETypeDef
 	struct{
 		float y;
 	}nonOrtCor;
+	double curResultAngle_RAW;
+	double curResultAngle_DFT;
+	uint8_t i;
 }sysDataTLETypeDef;
 
 void GetMaxMinValues(void);
 void GetTempValues(void);
 void GetColibValues(void);
-float ResultAngle(void);
+float GetResultAngle(void);
 
 #endif /* INC_OJ_MAIN_H_ */
