@@ -33,6 +33,7 @@
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 
+extern uint8_t usbOn;
 /* USER CODE END PV */
 
 /** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
@@ -92,43 +93,19 @@
 __ALIGN_BEGIN static uint8_t CUSTOM_HID_ReportDesc_FS[USBD_CUSTOM_HID_REPORT_DESC_SIZE] __ALIGN_END =
 {
   /* USER CODE BEGIN 0 */
-	 0x05, 0x01, // USAGE_PAGE (Generic Desktop)
-	 0x09, 0x05, // USAGE (Game Pad)
-	 0xa1, 0x01, // COLLECTION (Application)
-	 0x05, 0x02, // USAGE_PAGE (Simulation Controls)
-	 0x09, 0xbb, // USAGE (Throttle)
-	 0x15, 0x00, // LOGICAL_MINIMUM (0)
-	 0x25, 0x1f, // LOGICAL_MAXIMUM (31)
-	 0x75, 0x08, // REPORT_SIZE (8)
-	 0x95, 0x01, // REPORT_COUNT (1)
-	 0x81, 0x02, // INPUT (Data,Var,Abs)
-	 0x05, 0x02, // USAGE_PAGE (Simulation Controls)
-	 0x09, 0xbb, // USAGE (Throttle)
-	 0x15, 0x00, // LOGICAL_MINIMUM (0)
-	 0x25, 0x1f, // LOGICAL_MAXIMUM (31)
-	 0x75, 0x08, // REPORT_SIZE (8)
-	 0x95, 0x01, // REPORT_COUNT (1)
-	 0x81, 0x02, // INPUT (Data,Var,Abs)
-	 0x05, 0x01, // USAGE_PAGE (Generic Desktop)
-	 0xa1, 0x00, // COLLECTION (Physical)
-	 0x09, 0x30, // USAGE (X)
-	 0x09, 0x31, // USAGE (Y)
-	 0x09, 0x32, // USAGE (Z)
-	 0x09, 0x33, // USAGE (Rx)
-	 0x15, 0x81, // LOGICAL_MINIMUM (-127)
-	 0x25, 0x7f, // LOGICAL_MAXIMUM (127)
-	 0x75, 0x08, // REPORT_SIZE (8)
-	 0x95, 0x04, // REPORT_COUNT (4)
-	 0x81, 0x02, // INPUT (Data,Var,Abs)
-	 0x05, 0x09, // USAGE_PAGE (Button)
-	 0x19, 0x01, // USAGE_MINIMUM (Button 1)
-	 0x29, 0x10, // USAGE_MAXIMUM (Button 16)
-	 0x15, 0x00, // LOGICAL_MINIMUM (0)
-	 0x25, 0x01, // LOGICAL_MAXIMUM (1)
-	 0x75, 0x01, // REPORT_SIZE (1)
-	 0x95, 0x10, // REPORT_COUNT (16)
-	 0x81, 0x02, // INPUT (Data,Var,Abs)
-	 0xc0, // END_COLLECTION
+	0x06, 0x00, 0xFF,       // Usage Page = 0xFF00 (Vendor Defined Page 1)
+	0x09, 0x01,             // Usage (Vendor Usage 1)
+	0xA1, 0x01,             // Collection (Application)
+	0x19, 0x01,             //      Usage Minimum
+	0x29, 0x40,             //      Usage Maximum   //64 input usages total (0x01 to 0x40)
+	0x15, 0x00,             //      Logical Minimum (data bytes in the report may have minimum value = 0x00)
+	0x26, 0xFF, 0x00,       //      Logical Maximum (data bytes in the report may have maximum value = 0x00FF = unsigned 255)
+	0x75, 0x08,             //      Report Size: 8-bit field size
+	0x95, 0x40,             //      Report Count: Make sixty-four 8-bit fields (the next time the parser hits an "Input", "Output", or "Feature" item)
+	0x81, 0x00,             //      Input (Data, Array, Abs): Instantiates input packet fields based on the above report size, count, logical min/max, and usage.
+	0x19, 0x01,             //      Usage Minimum
+	0x29, 0x40,             //      Usage Maximum 	//64 output usages total (0x01 to 0x40)
+	0x91, 0x00,             //      Output (Data, Array, Abs): Instantiates output packet fields.  Uses same report size and count as "Input" fields, since nothing new/different was specified to the parser since the "Input" item.
   /* USER CODE END 0 */
   0xC0    /*     END_COLLECTION	             */
 };
@@ -214,7 +191,35 @@ static int8_t CUSTOM_HID_OutEvent_FS(uint8_t event_idx, uint8_t state)
 {
   /* USER CODE BEGIN 6 */
 	USBD_CUSTOM_HID_HandleTypeDef     *hhid = (USBD_CUSTOM_HID_HandleTypeDef*)hUsbDeviceFS.pClassData;
-	__NOP();
+	switch (hhid->Report_buf[0])
+	{
+		case 0x80:
+		{
+			if(usbOn == 0){
+				usbOn = 1;
+			}
+			else{
+				usbOn = 0;
+			}
+		}
+		break;
+//		case 0x81:
+//		{
+//			mainStruct.LTCOut.targetU = (hhid->Report_buf[3] << 8) + hhid->Report_buf[2];
+//		}
+//		break;
+//		case 0x82:
+//		{
+//			if(usbOn == 0){
+//				usbOn = 1;
+//			}
+//			else{
+//				usbOn = 0;
+//			}
+//		}
+//		break;
+
+	}
   return (USBD_OK);
   /* USER CODE END 6 */
 }

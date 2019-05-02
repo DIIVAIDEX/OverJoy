@@ -83,13 +83,20 @@ TIM_HandleTypeDef htim3;
 /* USER CODE BEGIN PV */
 USB_JoystickReport_Data_t joyStates;
 extern sysDataTLETypeDef sysDataTLE;
+extern mainDataTypeDef mainData;
 int16_t tleValues[2];
 int16_t tleTemp;
 uint8_t colibState;
 
+uint8_t tempUSBBuf[64];
+
+volatile uint8_t mainDataSize;
+
+uint8_t usbOn = 0;
+
 float resultAngle;
 
-uint8_t tempUSBBuf[8];
+//uint8_t tempUSBBuf[8];
 uint8_t *pointer = (uint8_t*)&joyStates;
 
 HAL_StatusTypeDef ret;
@@ -146,22 +153,13 @@ int main(void)
   MX_SPI2_Init();
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
-	joyStates.a1 = 1;
-	joyStates.a2 = 2;
-	joyStates.a3 = 3;
-	joyStates.a4 = 4;
-	joyStates.a5 = 5;
-	joyStates.a6 = 6;
-	joyStates.a7 = 7;
-	joyStates.a8 = 8;
 
 	TIM3->CCR2 = 2;
 	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
 	HAL_Delay(100);
 
-//	TLEConfig(TLE_CFG_INIT, NULL);
-	colibState = 0;
-	GetTempValues();
+	  GetTempValues();
+	  GetTempValues();
 
 
   /* USER CODE END 2 */
@@ -170,14 +168,24 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  if(colibState == 1){
-		  GetMaxMinValues();
+	  if(colibState == 0){
+		  GetResultAngle();
 	  }
-//	  else if(colibState == 2){
-//		  OrtCorrByDFT();
-//	  }
-	  else if(sysDataTLE.tempDepend.x != 0 && sysDataTLE.tempDepend.y != 0){
-		  resultAngle = GetResultAngle();
+	  else{
+		  GetTempValues();
+		  GetTempValues();
+		  colibState = 0;
+	  }
+
+	  if(usbOn == 1){
+			memcpy(tempUSBBuf+1, &mainData, 63);
+			tempUSBBuf[0] = 0x91;
+			USBD_CUSTOM_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&tempUSBBuf, sizeof(tempUSBBuf));
+			for(uint8_t i=sizeof(tempUSBBuf); i<sizeof(tempUSBBuf); i++)
+			{
+				tempUSBBuf[i] = 0xFF;
+			}
+			USBD_CUSTOM_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&tempUSBBuf, sizeof(tempUSBBuf));
 	  }
 
     /* USER CODE END WHILE */
@@ -252,7 +260,7 @@ static void MX_SPI2_Init(void)
   hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi2.Init.NSS = SPI_NSS_SOFT;
-  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_256;
+  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
   hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -355,8 +363,8 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : LD2_Pin */

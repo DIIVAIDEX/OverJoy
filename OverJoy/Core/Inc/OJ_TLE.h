@@ -20,6 +20,11 @@
 #define TLE_ALL_DATA_II		0x00BF
 #define TLE_ALL_DATA_III	0x00F2
 
+#define TLE_UNLOCK_VALUE	0x715A
+#define TLE_TEMP_ENABLE		0x6180
+#define TLE_TEMP_DISABLE	0x6100
+
+
 typedef struct _dataStructTLETypeDef
 {
 	uint8_t	ctrl1;

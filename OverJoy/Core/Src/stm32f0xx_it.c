@@ -194,13 +194,6 @@ void EXTI4_15_IRQHandler(void)
   if(colibState == 0){
 	  colibState = 1;
   }
-  else if(colibState == 1){
-	  colibState = 2;
-	  GetColibValues();
-  }
-  else if(colibState == 2){
-	  colibState = 0;
-  }
 //	if(HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == GPIO_PIN_RESET){
 //		joyStates.a7 = 1;
 //	}

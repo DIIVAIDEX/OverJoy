@@ -9,33 +9,32 @@
 #include "OJ_Main.h"
 
 sysDataTLETypeDef sysDataTLE;
+mainDataTypeDef mainData;
+
 int16_t tleValues[2];
 
+uint8_t tempArray[64];
 
 void GetMaxMinValues(void)
 {
-	TLEReadData(TLE_MAIN_VALUES, tleValues);
-
-	if(sysDataTLE.maxX < tleValues[0]){
-		sysDataTLE.maxX = tleValues[0];
+	if(mainData.maxX < mainData.currentX){
+		mainData.maxX = mainData.currentX;
 	}
-	if(sysDataTLE.minX > tleValues[0]){
-		sysDataTLE.minX = tleValues[0];
+	if(mainData.minX > mainData.currentX){
+		mainData.minX = mainData.currentX;
 	}
 
-	if(sysDataTLE.maxY < tleValues[1]){
-		sysDataTLE.maxY = tleValues[1];
+	if(mainData.maxY < mainData.currentY){
+		mainData.maxY = mainData.currentY;
 	}
-	if(sysDataTLE.minY > tleValues[1]){
-		sysDataTLE.minY = tleValues[1];
+	if(mainData.minY > mainData.currentY){
+		mainData.minY = mainData.currentY;
 	}
 }
 
 void GetTempValues(void)
 {
-	TLEReadData(TLE_TEMP_VALUE, &tleValues);
-	sysDataTLE.tempX = tleValues[0];
-//	sysDataTLE.tempY = tleValues[1];
+	TLEReadData(TLE_TEMP_VALUE, NULL);
 }
 
 
@@ -43,71 +42,82 @@ void GetColibValues(void)
 {
 	/*		Offset Definition
 	================================================================*/
-	sysDataTLE.offset.x = (sysDataTLE.maxX + sysDataTLE.minX) / 2;
-	sysDataTLE.offset.y = (sysDataTLE.maxY + sysDataTLE.minY) / 2;
+	mainData.colibData.offsetX = (mainData.maxX + mainData.minX) / 2;
+	mainData.colibData.offsetY = (mainData.maxY + mainData.minY) / 2;
 
 	/*		Amplitude Definition
 	================================================================*/
-	sysDataTLE.amplitude.x = (sysDataTLE.maxX - sysDataTLE.minX) / 2;
-	sysDataTLE.amplitude.y = (sysDataTLE.maxY - sysDataTLE.minY) / 2;
+	mainData.colibData.amplitudeX = (mainData.maxX - mainData.minX) / 2;
+	mainData.colibData.amplitudeY = (mainData.maxY - mainData.minY) / 2;
 
 	/*		Temperature-Dependent Behavior
 	================================================================*/
-	sysDataTLE.tempGrad.x = 0.116296 + (0.0010147 * sysDataTLE.offset.x);
-	sysDataTLE.tempGrad.y = -0.079401 + (0.0010121 * sysDataTLE.offset.y);
+	mainData.colibData.tempGradX = 0.116296 + (0.0010147 * mainData.colibData.offsetX);
+	mainData.colibData.tempGradY = -0.079401 + (0.0010121 * mainData.colibData.offsetY);
 	/*		Temperature-Dependent Offset Value
 	================================================================*/
 //	TLEReadData(TLE_TEMP_VALUE, &tleValues);
 //	sysDataTLE.tempDepend.x = sysDataTLE.offset.x + (sysDataTLE.tempGrad.x / -188.75) * (tleValues[0] - sysDataTLE.tempX);
 //	sysDataTLE.tempDepend.y = sysDataTLE.offset.y + (sysDataTLE.tempGrad.y / -188.75) * (tleValues[0] - sysDataTLE.tempX);
-	sysDataTLE.tempDepend.x = sysDataTLE.offset.x + (sysDataTLE.tempGrad.x / -188.75);
-	sysDataTLE.tempDepend.y = sysDataTLE.offset.y + (sysDataTLE.tempGrad.y / -188.75);
+	mainData.colibData.tempDependX = mainData.colibData.offsetX + (mainData.colibData.tempGradX / -188.75);
+	mainData.colibData.tempDependY = mainData.colibData.offsetY + (mainData.colibData.tempGradY / -188.75);
 
-	/*		Temperature-Dependent Offset Value
-	================================================================*/
-//	TLEReadData(TLE_MAIN_VALUES, tleValues);
-	sysDataTLE.ortDef = cos(tleValues[0]) - sin(tleValues[1]);
+//	/*		Temperature-Dependent Offset Value
+//	================================================================*/
+////	TLEReadData(TLE_MAIN_VALUES, tleValues);
+//	sysDataTLE.ortDef = cos(tleValues[0]) - sin(tleValues[1]);
 }
 
 float GetResultAngle(void)
 {
+	float offCorX;
+	float offCorY;
+	float ampNormX;
+	float ampNormY;
 	float radAngle;
+	static float fi = 0;
+	static float fiX = 0;
 
-	TLEReadData(TLE_MAIN_VALUES, tleValues);
-	sysDataTLE.curX = tleValues[0];
-	sysDataTLE.curY = tleValues[1];
+	TLEReadData(TLE_MAIN_VALUES, NULL);
+	GetMaxMinValues();
+	GetColibValues();
+
 
 	/*		Offset Correction
 	================================================================*/
-	sysDataTLE.offCor.x = tleValues[0] - sysDataTLE.tempDepend.x;
-	sysDataTLE.offCor.y = tleValues[1] - sysDataTLE.tempDepend.y;
+	offCorX = mainData.currentX - mainData.colibData.tempDependX;
+	offCorY = mainData.currentY - mainData.colibData.tempDependY;
 
 	/*		Amplitude Normalization
 	================================================================*/
-	sysDataTLE.ampNorm.x = sysDataTLE.offCor.x / sysDataTLE.amplitude.x;
-	sysDataTLE.ampNorm.y = sysDataTLE.offCor.y / sysDataTLE.amplitude.y;
+	ampNormX = offCorX / mainData.colibData.amplitudeX;
+	ampNormY = offCorY / mainData.colibData.amplitudeY;
 
-	/*		Non-Orthogonality Correction
+	/*		Resulting Angle RAW
 	================================================================*/
-	sysDataTLE.nonOrtCor.y = (sysDataTLE.ampNorm.y - sysDataTLE.ampNorm.x * sin(1.2400616409267344)) / cos(1.2400616409267344);
-
-	/*		Resulting Angle
-	================================================================*/
-	radAngle = atan2(sysDataTLE.ampNorm.y, sysDataTLE.ampNorm.x);
+	radAngle = atan2(ampNormY, ampNormX);
 	if(radAngle >= -PI_CONST && radAngle <= 0){
 		radAngle = PI_CONST + (PI_CONST + radAngle);
 	}
-	sysDataTLE.curResultAngle_RAW = (radAngle * 180) / PI_CONST;
+	mainData.curResultAngle_RAW = (radAngle * 180) / PI_CONST;
 
-	radAngle = atan2(sysDataTLE.nonOrtCor.y, sysDataTLE.ampNorm.x) - -1.8997343902912205;
-	if(radAngle >= -PI_CONST && radAngle <= 0){
-		radAngle = PI_CONST + (PI_CONST + radAngle);
-	}
-	sysDataTLE.curResultAngle_DFT = (radAngle * 180) / PI_CONST;
-
+	/*		Resulting Angle With Non-Orthogonality Correction
+	================================================================*/
+//	if(fi != 0 && fiX != 0){
+//		sysDataTLE.nonOrtCor.y = (sysDataTLE.ampNorm.y - sysDataTLE.ampNorm.x * sin(fi)) / cos(fi);
+//		radAngle = atan2(sysDataTLE.nonOrtCor.y, sysDataTLE.ampNorm.x) - mainData.colibData.fiX;
+//		if(radAngle >= -PI_CONST && radAngle <= 0){
+//			radAngle = PI_CONST + (PI_CONST + radAngle);
+//		}
+//		mainData.curResultAngle_DFT = (radAngle * 180) / PI_CONST;
+//	}
 	return 0;
 }
 
+/*		DFT method
+ *  Try to correct phase offset (orthogonality error) basing on
+ *  itself's corrupted data :D
+================================================================*/
 void OrtCorrByDFT(void)
 {
 	sysDataTLE.i = 0;
@@ -123,10 +133,9 @@ void OrtCorrByDFT(void)
 	volatile double fiX = 0;
 	volatile double fiY = 0;
 
-	float startAnglePos;
+	float startAnglePos = 0;
 
 	GetResultAngle();
-	startAnglePos = 0;
 
 	while(sysDataTLE.i < 64){
 		GetResultAngle();

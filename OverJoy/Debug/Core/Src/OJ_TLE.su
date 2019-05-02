@@ -1,2 +1,2 @@
-OJ_TLE.c:12:9:TLEReadData	56	static
-OJ_TLE.c:167:9:TLEConfig	24	static
+OJ_TLE.c:14:9:TLEReadData	40	static
+OJ_TLE.c:130:9:TLEConfig	24	static
